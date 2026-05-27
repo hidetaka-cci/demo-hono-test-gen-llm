@@ -104,6 +104,42 @@ describe('API', () => {
     expect(body).toEqual({ error: '`datetime` must be an ISO string' })
   })
 
+  it('POST /offset-datetime applies day hour minute offset to ISO datetime', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { days: 1, hours: 2, minutes: 30 },
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toEqual({
+      input: '2026-05-27T00:00:00.000Z',
+      offset: { days: 1, hours: 2, minutes: 30 },
+      result: '2026-05-28T02:30:00.000Z',
+    })
+  })
+
+  it('POST /business-days counts weekdays between two dates', async () => {
+    const res = await app.request('http://localhost/business-days', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ start: '2026-05-01', end: '2026-05-27' }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toEqual({
+      start: '2026-05-01',
+      end: '2026-05-27',
+      businessDays: 19,
+      totalDays: 27,
+    })
+  })
+
   it('POST /convert-timezone/:tz returns 400 for invalid timezone', async () => {
     const res = await app.request('http://localhost/convert-timezone/Not%2FA%2FTimezone', {
       method: 'POST',
