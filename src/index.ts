@@ -124,12 +124,6 @@ app.post('/business-days', async (c) => {
   if (spanDays > 366) {
     return c.json({ error: 'Date range cannot exceed 366 days' }, 400)
   }
-  if (spanDays < 0) {
-    return c.json({ error: 'Invalid date range' }, 400)
-  }
-  if (!startDt.toISODate() || !endDt.toISODate()) {
-    return c.json({ error: 'Dates must include a calendar day' }, 400)
-  }
   if (startDt.year < 1900 || endDt.year > 2100) {
     return c.json({ error: 'Dates must be between years 1900 and 2100' }, 400)
   }
