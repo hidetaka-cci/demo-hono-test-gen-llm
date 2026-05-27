@@ -35,3 +35,7 @@ lerna-debug.log*
 # chunk active sidecar tracking
 .chunk/sidecar.json
 .chunk/sidecar.*.json
+
+test-results/
+*.md
+!README.md

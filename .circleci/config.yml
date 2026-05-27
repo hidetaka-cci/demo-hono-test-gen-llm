@@ -1,0 +1,35 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.0.2
+
+jobs:
+  test:
+    executor:
+      name: node/default
+      # package-lock 上で一部 dependency の engines が Node >= 22 を要求するため明示
+      tag: "22.22.3"
+    steps:
+      - checkout
+
+      - node/install-packages:
+          pkg-manager: npm
+
+      - run:
+          name: Run tests (vitest + junit)
+          command: |
+            mkdir -p test-results
+            npm test -- --reporter=junit --outputFile=test-results/junit.xml
+          # @.chunk/config.json: timeout 300 / limit 3 を run step に寄せる
+          no_output_timeout: 300s
+          max_auto_reruns: 3
+          auto_rerun_delay: 10s
+
+      - store_test_results:
+          path: test-results
+
+workflows:
+  test:
+    jobs:
+      - test
+
