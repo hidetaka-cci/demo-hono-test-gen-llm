@@ -39,3 +39,5 @@ lerna-debug.log*
 test-results/
 *.md
 !README.md
+!.cursor/*.md
+!.cursor/skills/**/SKILL.md

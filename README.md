@@ -168,6 +168,7 @@ Reproducible agent sessions and known sharp edges:
 | [FRICTION_LOG_CHUNK_SIDECAR.md](./FRICTION_LOG_CHUNK_SIDECAR.md) | Sidecar-only: create, exec, snapshot, sync |
 | [FRICTION_LOG_TESTGEN_LLM_LOOP.md](./FRICTION_LOG_TESTGEN_LLM_LOOP.md) | Testgen-only: filters, coverage, PR #1 |
 | [FRICTION_LOG_PARTIAL_COVERAGE_DEMO.md](./FRICTION_LOG_PARTIAL_COVERAGE_DEMO.md) | Intentional ~70% coverage + TDD on sidecar |
+| [FRICTION_LOG_TESTGEN_PR3.md](./FRICTION_LOG_TESTGEN_PR3.md) | testgen on ~70% branch → 98% coverage ([PR #3](https://github.com/hidetaka-cci/demo-hono-test-gen-llm/pull/3)) |
 | [FRICTION_LOG_ORGID_BOOTSTRAP.md](./FRICTION_LOG_ORGID_BOOTSTRAP.md) | Bootstrapping when `orgID` is missing |
 
 High-signal lessons (details in logs):
