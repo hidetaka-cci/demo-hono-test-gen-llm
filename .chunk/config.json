@@ -11,5 +11,24 @@
       "timeout": 300,
       "limit": 3
     }
-  ]
+  ],
+  "validation": {
+    "sidecarImage": "119285ae-9869-4442-9b03-eff8c1e1bde8"
+  },
+  "orgID": "0ffedcab-0755-4ea2-a76e-7f8a0b082494",
+  "environment": {
+    "stack": "typescript",
+    "setup": [
+      {
+        "name": "install",
+        "command": "npm install"
+      },
+      {
+        "name": "test",
+        "command": "npm test"
+      }
+    ],
+    "image": "cimg/node",
+    "image_version": "26.2.0"
+  }
 }

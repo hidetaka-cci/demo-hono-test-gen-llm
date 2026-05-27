@@ -60,5 +60,60 @@ describe('API', () => {
     const body = await res.json()
     expect(body).toHaveProperty('error')
   })
+
+  it('GET / returns Hello Hono!', async () => {
+    const res = await app.request('http://localhost/')
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type') ?? '').toContain('text/plain')
+    expect(await res.text()).toBe('Hello Hono!')
+  })
+
+  it('POST /convert-timezone/:tz returns 400 for invalid JSON body', async () => {
+    const res = await app.request('http://localhost/convert-timezone/Asia%2FTokyo', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{',
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body).toEqual({ error: 'Invalid JSON body' })
+  })
+
+  it('POST /convert-timezone/:tz returns 400 when datetime is missing', async () => {
+    const res = await app.request('http://localhost/convert-timezone/Asia%2FTokyo', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body).toEqual({ error: '`datetime` must be an ISO string' })
+  })
+
+  it('POST /convert-timezone/:tz returns 400 when datetime is not a string', async () => {
+    const res = await app.request('http://localhost/convert-timezone/Asia%2FTokyo', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ datetime: 12345 }),
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body).toEqual({ error: '`datetime` must be an ISO string' })
+  })
+
+  it('POST /convert-timezone/:tz returns 400 for invalid timezone', async () => {
+    const res = await app.request('http://localhost/convert-timezone/Not%2FA%2FTimezone', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ datetime: '2026-05-27T00:00:00.000Z' }),
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body).toEqual({ error: 'Invalid timezone' })
+  })
 })
 
