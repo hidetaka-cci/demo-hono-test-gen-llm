@@ -207,6 +207,33 @@ describe('API', () => {
     expect(await res.json()).toEqual({ error: 'Date range cannot exceed 366 days' })
   })
 
+  it('POST /business-days returns 400 when span is 367 days', async () => {
+    const res = await app.request('http://localhost/business-days', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ start: '2024-01-01', end: '2025-01-02' }),
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Date range cannot exceed 366 days' })
+  })
+
+  it('POST /business-days accepts a range of exactly 366 span days', async () => {
+    const res = await app.request('http://localhost/business-days', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ start: '2024-01-01', end: '2025-01-01' }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      start: '2024-01-01',
+      end: '2025-01-01',
+      businessDays: 263,
+      totalDays: 367,
+    })
+  })
+
   it('POST /business-days returns 400 for dates outside allowed years', async () => {
     const res = await app.request('http://localhost/business-days', {
       method: 'POST',
@@ -274,6 +301,40 @@ describe('API', () => {
     })
   })
 
+  it('POST /offset-datetime returns 400 when offset span is 367 days', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { days: 367 },
+      }),
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({
+      error: 'Offset magnitude cannot exceed 366 days',
+    })
+  })
+
+  it('POST /offset-datetime accepts an offset of exactly 366 days', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { days: 366 },
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      input: '2026-05-27T00:00:00.000Z',
+      offset: { days: 366 },
+      result: '2027-05-28T00:00:00.000Z',
+    })
+  })
+
   it('POST /offset-datetime returns 400 when offset does not change datetime', async () => {
     const res = await app.request('http://localhost/offset-datetime', {
       method: 'POST',
@@ -326,6 +387,17 @@ describe('API', () => {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ start: '   ', end: '2026-05-27' }),
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: '`start` and `end` cannot be empty' })
+  })
+
+  it('POST /business-days returns 400 when end is whitespace only', async () => {
+    const res = await app.request('http://localhost/business-days', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ start: '2026-05-01', end: '   ' }),
     })
 
     expect(res.status).toBe(400)
