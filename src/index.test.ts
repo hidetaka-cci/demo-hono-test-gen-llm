@@ -140,6 +140,41 @@ describe('API', () => {
     })
   })
 
+  it('POST /business-days normalizes ISO datetimes to calendar days for counting', async () => {
+    const res = await app.request('http://localhost/business-days', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        start: '2026-05-01T18:00:00.000Z',
+        end: '2026-05-02T06:00:00.000Z',
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toEqual({
+      start: '2026-05-01',
+      end: '2026-05-02',
+      businessDays: 1,
+      totalDays: 2,
+    })
+  })
+
+  it('POST /business-days accepts an inclusive range of exactly 366 days', async () => {
+    const res = await app.request('http://localhost/business-days', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ start: '2024-01-01', end: '2025-01-01' }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.start).toBe('2024-01-01')
+    expect(body.end).toBe('2025-01-01')
+    expect(body.totalDays).toBe(367)
+    expect(body.businessDays).toBe(263)
+  })
+
   it('POST /convert-timezone/:tz returns 400 for invalid timezone', async () => {
     const res = await app.request('http://localhost/convert-timezone/Not%2FA%2FTimezone', {
       method: 'POST',
