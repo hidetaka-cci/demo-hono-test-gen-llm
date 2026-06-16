@@ -15,6 +15,12 @@ This is a single Cloudflare Workers + Hono datetime API (TypeScript). There is n
 - `npm install` reports npm audit vulnerabilities; these are transitive dev-dependency advisories and do not block dev/test/run.
 
 ### CircleCI CLI / chunk CLI / Chunk sidecars
+
+**chunk CLI usage rule (this env): always append `</dev/null` to `chunk validate`.** In this non-interactive Cloud Agent shell, `chunk validate` blocks on an interactive stdin read and hangs forever (see details below). Redirecting stdin from `/dev/null` is the fix and works for both local and remote runs:
+- `chunk validate </dev/null` — runs the configured commands locally (cwd `/workspace`).
+- `chunk validate --remote </dev/null` — syncs and runs them on the active sidecar (cwd `/home/user/<repo>`).
+`CI=1` does NOT help on its own; `</dev/null` is what matters. If a `chunk validate` ever hangs (forgotten redirect), it ignores `SIGTERM` — kill it with `kill -9 <pid>`.
+
 The update script installs the `circleci` and `chunk` CLIs into `/usr/local/bin` (idempotent; skipped if already present). Linux x86_64 has no Homebrew, so they are installed from official release artifacts, not `brew`.
 - CircleCI auth is provided via the `CIRCLECI_TOKEN` environment variable (a configured secret). `chunk auth status` should show CircleCI "✓ Valid" with no extra setup. Never `echo`/`printenv` the token.
 - Sidecar org ID and snapshot image come from `.chunk/config.json` (`orgID`, `validation.sidecarImage`). `chunk sidecar create` needs `--org-id` (interactive org selection does not work in agent sessions); pair it with `--image <sidecarImage>` to boot from the snapshot.
