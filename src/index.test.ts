@@ -620,5 +620,55 @@ describe('API', () => {
       error: 'Dates must be between years 1900 and 2100',
     })
   })
+
+  it('POST /offset-datetime applies hours-only offset to ISO datetime', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { hours: 5 },
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      input: '2026-05-27T00:00:00.000Z',
+      offset: { hours: 5 },
+      result: '2026-05-27T05:00:00.000Z',
+    })
+  })
+
+  it('POST /offset-datetime applies minutes-only offset to ISO datetime', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T12:00:00.000Z',
+        offset: { minutes: 15 },
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      input: '2026-05-27T12:00:00.000Z',
+      offset: { minutes: 15 },
+      result: '2026-05-27T12:15:00.000Z',
+    })
+  })
+
+  it('POST /offset-datetime returns 400 when hours-only offset is zero', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { hours: 0 },
+      }),
+    })
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Offset must change the datetime' })
+  })
 })
 
