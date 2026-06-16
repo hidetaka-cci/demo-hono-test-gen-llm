@@ -104,6 +104,43 @@ describe('API', () => {
     expect(body).toEqual({ error: '`datetime` must be an ISO string' })
   })
 
+  it('POST /offset-datetime applies hours-only offset without days field', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { hours: 5 },
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      input: '2026-05-27T00:00:00.000Z',
+      offset: { hours: 5 },
+      result: '2026-05-27T05:00:00.000Z',
+    })
+  })
+
+  it('POST /offset-datetime applies minutes-only offset without days field', async () => {
+    const res = await app.request('http://localhost/offset-datetime', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        datetime: '2026-05-27T00:00:00.000Z',
+        offset: { minutes: 45 },
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({
+      input: '2026-05-27T00:00:00.000Z',
+      offset: { minutes: 45 },
+      result: '2026-05-27T00:45:00.000Z',
+    })
+  })
+
+
   it('POST /offset-datetime applies day hour minute offset to ISO datetime', async () => {
     const res = await app.request('http://localhost/offset-datetime', {
       method: 'POST',
