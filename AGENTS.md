@@ -1,0 +1,29 @@
+# AGENTS.md
+
+## Cursor Cloud specific instructions
+
+This is a single Cloudflare Workers + Hono datetime API (TypeScript). There is no database, auth, or external service — the app is fully self-contained. Standard commands live in `package.json` and `README.md`; only the non-obvious caveats are noted here.
+
+### Services
+- **Worker dev server** — `npm run dev` (`wrangler dev`), serves all endpoints on `http://localhost:8787`.
+- **Test suite** — `npm test` (Vitest). Tests import the Hono `app` and dispatch requests in-process, so they do NOT need the dev server running.
+
+### Non-obvious caveats
+- `wrangler dev` is interactive on first run in a fresh environment: it prompts "install Cloudflare skills for Cursor?" — answer `n`. Run it inside a tmux session (not a one-shot foreground command) so you can respond to the prompt and keep the server alive.
+- There is no separate build step for local dev; `wrangler dev` bundles on the fly. `npm run cf-typegen` only regenerates Worker binding types and is optional.
+- `POST /offset-datetime` expects the shape `{"datetime": "<ISO>", "offset": {"days": .., "hours": ..}}` — `offset` must be a nested object, not top-level fields.
+- `npm install` reports npm audit vulnerabilities; these are transitive dev-dependency advisories and do not block dev/test/run.
+
+### CircleCI CLI / chunk CLI / Chunk sidecars
+
+**chunk CLI usage rule (this env): always append `</dev/null` to `chunk validate`.** In this non-interactive Cloud Agent shell, `chunk validate` blocks on an interactive stdin read and hangs forever (see details below). Redirecting stdin from `/dev/null` is the fix and works for both local and remote runs:
+- `chunk validate </dev/null` — runs the configured commands locally (cwd `/workspace`).
+- `chunk validate --remote </dev/null` — syncs and runs them on the active sidecar (cwd `/home/user/<repo>`).
+`CI=1` does NOT help on its own; `</dev/null` is what matters. If a `chunk validate` ever hangs (forgotten redirect), it ignores `SIGTERM` — kill it with `kill -9 <pid>`.
+
+The update script installs the `circleci` and `chunk` CLIs into `/usr/local/bin` (idempotent; skipped if already present). Linux x86_64 has no Homebrew, so they are installed from official release artifacts, not `brew`.
+- CircleCI auth is provided via the `CIRCLECI_TOKEN` environment variable (a configured secret). `chunk auth status` should show CircleCI "✓ Valid" with no extra setup. Never `echo`/`printenv` the token.
+- Sidecar org ID and snapshot image come from `.chunk/config.json` (`orgID`, `validation.sidecarImage`). `chunk sidecar create` needs `--org-id` (interactive org selection does not work in agent sessions); pair it with `--image <sidecarImage>` to boot from the snapshot.
+- `chunk sidecar create` can intermittently time out with `context deadline exceeded`; simply retry — connectivity is fine (verify with `chunk sidecar list`).
+- Before `chunk sidecar sync`, an SSH keypair must exist at `~/.ssh/chunk_ai`. If missing: `ssh-keygen -t ed25519 -f ~/.ssh/chunk_ai -N ""` then `chunk sidecar add-ssh-key --public-key-file ~/.ssh/chunk_ai.pub`. The key is not persisted by the update script, so regenerate/register per fresh VM as needed.
+- `chunk validate` (and `--remote`, `--list`, `--dry-run`) hangs because it blocks on an **interactive stdin read**; in the non-interactive agent shell stdin never reaches EOF, so it blocks forever and ignores `SIGTERM` (needs `kill -9`). This is NOT a network/container limitation or an API 4XX — `chunk auth`, `sidecar list/create/sync/exec` all work. **The essential and sufficient fix is redirecting stdin: append `</dev/null`.** Verified by isolation: `chunk validate --list` hangs; `chunk validate --list </dev/null` returns instantly. `CI=1` is **neither necessary nor sufficient** — `CI=1 chunk validate --list` (no `</dev/null`) still hangs, while `chunk validate --remote </dev/null` (no `CI=1`) completes. Working form: `chunk validate --remote </dev/null` (runs install + test gate on the sidecar; 48/48 pass). `chunk sidecar exec --command bash --args -lc --args "cd ~/demo-hono-test-gen-llm && npm ci && npm test"` is an equivalent alternative. The synced tree lives at `~/demo-hono-test-gen-llm` on the sidecar (path varies by base image — confirm with `chunk sidecar current --json`).

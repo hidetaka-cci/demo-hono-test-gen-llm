@@ -1,0 +1,3 @@
+{
+  "install": "npm install\ncommand -v circleci >/dev/null 2>&1 || curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/main/install.sh | sudo bash || echo 'WARN: circleci CLI install failed (non-fatal)'\ncommand -v chunk >/dev/null 2>&1 || { curl -fLSs https://github.com/CircleCI-Public/chunk-cli/releases/latest/download/chunk-cli_Linux_x86_64.tar.gz -o /tmp/chunk-cli.tar.gz && tar -xzf /tmp/chunk-cli.tar.gz -C /tmp chunk && sudo install -m 0755 /tmp/chunk /usr/local/bin/chunk && rm -f /tmp/chunk /tmp/chunk-cli.tar.gz; } || echo 'WARN: chunk CLI install failed (non-fatal)'"
+}
